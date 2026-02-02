@@ -27,4 +27,5 @@ const menuItemSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('MenuItem', menuItemSchema);
+// The third argument 'menuitems' forces Mongoose to use your actual collection
+module.exports = mongoose.model('Item', itemSchema, 'menuitems');
