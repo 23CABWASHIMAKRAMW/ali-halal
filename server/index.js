@@ -7,7 +7,7 @@ const app = express();
 
 // Middleware
 // We allow CORS so your Vercel frontend can talk to your Render backend
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // Import Routes
