@@ -1,0 +1,53 @@
+/* Professional Ali Halal Theme */
+body { 
+  margin: 0; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+  background-color: #f4f4f4; 
+}
+
+.halal-header { 
+  background-color: #F4A300; /* Golden Yellow */
+  color: white; 
+  padding: 30px; 
+  text-align: center; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+  padding: 30px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.food-card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  border-top: 10px solid #F4A300;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.food-card:hover { transform: translateY(-5px); }
+
+.price { 
+  color: #C8102E; /* Deep Red */
+  font-weight: bold; 
+  font-size: 1.3rem; 
+}
+
+.order-btn {
+  background-color: #F4A300;
+  color: white;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 15px;
+  text-transform: uppercase;
+}
