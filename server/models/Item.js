@@ -27,5 +27,5 @@ const menuItemSchema = new mongoose.Schema({
   }
 });
 
-// The third argument 'menuitems' forces Mongoose to use your actual collection
-module.exports = mongoose.model('Item', itemSchema, 'menuitems');
+// We use 'Item' as the model name and 'items' as the exact collection name in Atlas
+module.exports = mongoose.model('Item', menuItemSchema, 'items');
