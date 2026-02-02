@@ -5,21 +5,27 @@ import UPIPayment from './UPIPayment';
 const Menu = ({ session }) => {
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true); // Added loading state
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [showUPI, setShowUPI] = useState(false);
 
-  // --- API URL LOGIC ---
-  // This automatically uses Render when live and Localhost when you are coding
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:5000" 
-    : "https://ali-halal-backend.onrender.com"; // Ensure this matches your Render URL
+    : "https://ali-halal-backend.onrender.com";
 
   useEffect(() => {
+    setLoading(true);
     fetch(`${API_URL}/api/menu`)
       .then(res => res.json())
-      .then(data => setItems(data))
-      .catch(err => console.log("Server error:", err));
+      .then(data => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Server error:", err);
+        setLoading(false);
+      });
   }, [API_URL]);
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
@@ -96,27 +102,34 @@ const Menu = ({ session }) => {
       )}
 
       <div style={{ padding: '20px' }}>
-        {items.map(item => (
-          <div key={item._id} style={{ background: 'white', padding: '15px', marginBottom: '10px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between' }}>
-            <div>
-                <h3 style={{ margin: 0 }}>{item.itemName}</h3>
-                <p style={{ color: '#777', margin: 0 }}>₹{item.price}</p>
+        {loading ? (
+          <p style={{ textAlign: 'center' }}>Loading delicious menu...</p>
+        ) : items.length === 0 ? (
+          <p style={{ textAlign: 'center' }}>No items found in database.</p>
+        ) : (
+          items.map(item => (
+            <div key={item._id} style={{ background: 'white', padding: '15px', marginBottom: '10px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+              <div>
+                  <h3 style={{ margin: 0, color: '#1A2332' }}>{item.itemName}</h3>
+                  <p style={{ color: '#777', margin: '5px 0' }}>₹{item.price}</p>
+                  {item.description && <p style={{ fontSize: '0.8rem', color: '#999' }}>{item.description}</p>}
+              </div>
+              <button onClick={() => setCart([...cart, item])} style={{ backgroundColor: '#1A2332', color: 'white', border: 'none', borderRadius: '5px', padding: '8px 15px', cursor: 'pointer' }}>ADD +</button>
             </div>
-            <button onClick={() => setCart([...cart, item])} style={{ backgroundColor: '#1A2332', color: 'white', border: 'none', borderRadius: '5px', padding: '5px 15px' }}>ADD +</button>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {cart.length > 0 && (
-        <div style={{ position: 'fixed', bottom: '0', width: '100%', backgroundColor: 'white', padding: '20px', boxShadow: '0 -5px 15px rgba(0,0,0,0.1)', borderTop: '2px solid #C8102E' }}>
+        <div style={{ position: 'fixed', bottom: '0', width: '100%', backgroundColor: 'white', padding: '20px', boxShadow: '0 -5px 15px rgba(0,0,0,0.1)', borderTop: '2px solid #C8102E', boxSizing: 'border-box' }}>
           <div style={{ marginBottom: '10px' }}>
                <strong>Payment: </strong>
                <input type="radio" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} /> Cash 
-               <input type="radio" checked={paymentMethod === 'Online'} onChange={() => setPaymentMethod('Online')} /> Online (GPay/PhonePe)
+               <input type="radio" style={{marginLeft: '15px'}} checked={paymentMethod === 'Online'} onChange={() => setPaymentMethod('Online')} /> Online
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Total: ₹{totalPrice}</span>
-            <button onClick={handlePlaceOrder} style={{ backgroundColor: '#C8102E', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '30px', fontWeight: 'bold' }}>PLACE ORDER →</button>
+            <button onClick={handlePlaceOrder} style={{ backgroundColor: '#C8102E', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '30px', fontWeight: 'bold', cursor: 'pointer' }}>PLACE ORDER →</button>
           </div>
         </div>
       )}
