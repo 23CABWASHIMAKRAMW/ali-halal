@@ -1,24 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import ReviewForm from './ReviewForm';
-import UPIPayment from './UPIPayment'; // Import the new UPI component
+import UPIPayment from './UPIPayment';
 
 const Menu = ({ session }) => {
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
-  const [showUPI, setShowUPI] = useState(false); // To control the QR popup
+  const [showUPI, setShowUPI] = useState(false);
+
+  // --- API URL LOGIC ---
+  // This automatically uses Render when live and Localhost when you are coding
+  const API_URL = window.location.hostname === "localhost" 
+    ? "http://localhost:5000" 
+    : "https://ali-halal-backend.onrender.com"; // Ensure this matches your Render URL
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/menu')
+    fetch(`${API_URL}/api/menu`)
       .then(res => res.json())
       .then(data => setItems(data))
       .catch(err => console.log("Server error:", err));
-  }, []);
+  }, [API_URL]);
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
 
-  // 1. Submit Order to Database
   const submitOrderToDatabase = () => {
     const orderData = {
       phoneNumber: session.phone,
@@ -28,7 +33,7 @@ const Menu = ({ session }) => {
       paymentMethod: paymentMethod
     };
 
-    fetch('http://localhost:5000/api/orders/place', {
+    fetch(`${API_URL}/api/orders/place`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData)
@@ -40,17 +45,16 @@ const Menu = ({ session }) => {
     .catch(err => alert("Error: " + err.message));
   };
 
-  // 2. Handle Button Click
   const handlePlaceOrder = () => {
     if (paymentMethod === 'Online') {
-      setShowUPI(true); // Show QR Code for GPay/PhonePe
+      setShowUPI(true);
     } else {
-      submitOrderToDatabase(); // Direct submit for Cash
+      submitOrderToDatabase();
     }
   };
 
   const callWaiter = () => {
-    fetch('http://localhost:5000/api/requests/call', {
+    fetch(`${API_URL}/api/requests/call`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tableNumber: session.table }) 
@@ -75,7 +79,6 @@ const Menu = ({ session }) => {
         <button onClick={callWaiter} style={{ backgroundColor: '#F4A300', border: 'none', padding: '10px', borderRadius: '20px', fontWeight: 'bold' }}>🔔 CALL WAITER</button>
       </header>
 
-      {/* UPI QR MODAL POPUP */}
       {showUPI && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ width: '90%', maxWidth: '350px' }}>
@@ -92,7 +95,6 @@ const Menu = ({ session }) => {
         </div>
       )}
 
-      {/* MENU ITEMS DISPLAY */}
       <div style={{ padding: '20px' }}>
         {items.map(item => (
           <div key={item._id} style={{ background: 'white', padding: '15px', marginBottom: '10px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between' }}>
@@ -105,13 +107,12 @@ const Menu = ({ session }) => {
         ))}
       </div>
 
-      {/* FLOATING CART */}
       {cart.length > 0 && (
         <div style={{ position: 'fixed', bottom: '0', width: '100%', backgroundColor: 'white', padding: '20px', boxShadow: '0 -5px 15px rgba(0,0,0,0.1)', borderTop: '2px solid #C8102E' }}>
           <div style={{ marginBottom: '10px' }}>
-             <strong>Payment: </strong>
-             <input type="radio" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} /> Cash 
-             <input type="radio" checked={paymentMethod === 'Online'} onChange={() => setPaymentMethod('Online')} /> Online (GPay/PhonePe)
+               <strong>Payment: </strong>
+               <input type="radio" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} /> Cash 
+               <input type="radio" checked={paymentMethod === 'Online'} onChange={() => setPaymentMethod('Online')} /> Online (GPay/PhonePe)
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Total: ₹{totalPrice}</span>
