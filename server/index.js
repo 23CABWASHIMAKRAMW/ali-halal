@@ -6,34 +6,27 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-// Allows your Vercel frontend and Admin panel to access this API
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// --- MONGODB MODELS (Synchronized with your actual data) ---
+// --- MONGODB MODELS (Aligned with your actual data) ---
 
-// 1. Menu Item Schema
+// 1. Menu Item Model
 const itemSchema = new mongoose.Schema({
   itemName: String,
   description: String,
   price: Number,
   category: String,
   isAvailable: { type: Boolean, default: true }
-}, { collection: 'items' }); // Explicitly pointing to 'items' collection
+}, { collection: 'items' });
 const Item = mongoose.model('Item', itemSchema);
 
-// 2. Order Schema (Updated to match your JSON data)
+// 2. Order Model (Synchronized with your JSON fields)
 const orderSchema = new mongoose.Schema({
   phoneNumber: String,
   tableNumber: String,
-  items: [
-    {
-      itemName: String,
-      price: Number,
-      _id: mongoose.Schema.Types.ObjectId
-    }
-  ],
-  totalAmount: Number, // Matches your DB field
+  items: Array,
+  totalAmount: Number, // Changed to match your screenshot data
   paymentMethod: String,
   isPaid: { type: Boolean, default: false },
   status: { type: String, default: 'Pending' },
@@ -41,7 +34,7 @@ const orderSchema = new mongoose.Schema({
 }, { collection: 'orders' });
 const Order = mongoose.model('Order', orderSchema);
 
-// 3. Review Schema
+// 3. Review Model
 const reviewSchema = new mongoose.Schema({
   customerName: String,
   rating: Number,
@@ -50,7 +43,7 @@ const reviewSchema = new mongoose.Schema({
 }, { collection: 'reviews' });
 const Review = mongoose.model('Review', reviewSchema);
 
-// 4. Waiter Request Schema
+// 4. Waiter Request Model
 const requestSchema = new mongoose.Schema({
   tableNumber: String,
   requestType: String,
@@ -60,9 +53,9 @@ const requestSchema = new mongoose.Schema({
 const Request = mongoose.model('Request', requestSchema);
 
 
-// --- API ROUTES ---
+// --- API ROUTES (Defined directly to prevent "Cannot GET" errors) ---
 
-// GET: All Menu Items
+// Menu Route
 app.get('/api/menu', async (req, res) => {
   try {
     const items = await Item.find();
@@ -72,7 +65,7 @@ app.get('/api/menu', async (req, res) => {
   }
 });
 
-// GET: All Orders (For Admin Panel)
+// Orders Route - This fixes your "Cannot GET /api/orders" error
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
@@ -82,7 +75,7 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// GET: All Reviews
+// Reviews Route
 app.get('/api/reviews', async (req, res) => {
   try {
     const reviews = await Review.find().sort({ createdAt: -1 });
@@ -92,7 +85,7 @@ app.get('/api/reviews', async (req, res) => {
   }
 });
 
-// GET: All Waiter Requests
+// Waiter Requests Route
 app.get('/api/requests', async (req, res) => {
   try {
     const requests = await Request.find().sort({ createdAt: -1 });
@@ -102,20 +95,17 @@ app.get('/api/requests', async (req, res) => {
   }
 });
 
-// Root Health Check
+// Root Route
 app.get('/', (req, res) => {
   res.send('Ali Halal Server is running... 🚀');
 });
 
 // --- DATABASE CONNECTION ---
-const dbURI = process.env.MONGO_URI || 'mongodb://localhost:27017/alihalal';
-
+const dbURI = process.env.MONGO_URI;
 mongoose.connect(dbURI)
-  .then(() => console.log("✅ Ali Halal Database Connected Successfully!"))
+  .then(() => console.log("✅ Ali Halal Database Connected!"))
   .catch(err => console.log("❌ DB Error:", err));
 
-// --- SERVER START ---
+// --- START SERVER ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server is live on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server live on port ${PORT}`));
