@@ -126,8 +126,17 @@ app.post('/api/requests', async (req, res) => {
 });
 
 // Root Route
-app.get('/', (req, res) => {
-  res.send('Ali Halal Server is running... 🚀');
+app.get('/api/orders', async (req, res) => {
+  try {
+    // This log will show in your Render "Logs" tab
+    console.log("Connected to DB:", mongoose.connection.name);
+    console.log("Looking in collection:", Order.collection.name);
+    
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // --- DATABASE CONNECTION ---
