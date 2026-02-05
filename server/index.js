@@ -6,53 +6,63 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
+// Allows your Vercel frontend and Admin panel to access this API
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// --- MONGODB MODELS (The Blueprints) ---
+// --- MONGODB MODELS (Synchronized with your actual data) ---
 
-// Menu Item Schema
+// 1. Menu Item Schema
 const itemSchema = new mongoose.Schema({
   itemName: String,
   description: String,
   price: Number,
   category: String,
   isAvailable: { type: Boolean, default: true }
-});
-const Item = mongoose.model('Item', itemSchema, 'items');
+}, { collection: 'items' }); // Explicitly pointing to 'items' collection
+const Item = mongoose.model('Item', itemSchema);
 
-// Order Schema
+// 2. Order Schema (Updated to match your JSON data)
 const orderSchema = new mongoose.Schema({
-  customerName: String,
-  items: Array,
-  totalPrice: Number,
+  phoneNumber: String,
+  tableNumber: String,
+  items: [
+    {
+      itemName: String,
+      price: Number,
+      _id: mongoose.Schema.Types.ObjectId
+    }
+  ],
+  totalAmount: Number, // Matches your DB field
+  paymentMethod: String,
+  isPaid: { type: Boolean, default: false },
   status: { type: String, default: 'Pending' },
   createdAt: { type: Date, default: Date.now }
-});
-const Order = mongoose.model('Order', orderSchema, 'orders');
+}, { collection: 'orders' });
+const Order = mongoose.model('Order', orderSchema);
 
-// Review Schema
+// 3. Review Schema
 const reviewSchema = new mongoose.Schema({
   customerName: String,
   rating: Number,
   comment: String,
   createdAt: { type: Date, default: Date.now }
-});
-const Review = mongoose.model('Review', reviewSchema, 'reviews');
+}, { collection: 'reviews' });
+const Review = mongoose.model('Review', reviewSchema);
 
-// Request/Waiter Call Schema
+// 4. Waiter Request Schema
 const requestSchema = new mongoose.Schema({
   tableNumber: String,
-  requestType: String, // e.g., "Call Waiter" or "Water"
+  requestType: String,
   status: { type: String, default: 'Active' },
   createdAt: { type: Date, default: Date.now }
-});
-const Request = mongoose.model('Request', requestSchema, 'requests');
+}, { collection: 'requests' });
+const Request = mongoose.model('Request', requestSchema);
 
 
 // --- API ROUTES ---
 
-// 1. Menu Routes
+// GET: All Menu Items
 app.get('/api/menu', async (req, res) => {
   try {
     const items = await Item.find();
@@ -62,7 +72,7 @@ app.get('/api/menu', async (req, res) => {
   }
 });
 
-// 2. Order Routes (For Admin Panel)
+// GET: All Orders (For Admin Panel)
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
@@ -72,7 +82,7 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// 3. Review Routes (For Admin Panel)
+// GET: All Reviews
 app.get('/api/reviews', async (req, res) => {
   try {
     const reviews = await Review.find().sort({ createdAt: -1 });
@@ -82,7 +92,7 @@ app.get('/api/reviews', async (req, res) => {
   }
 });
 
-// 4. Waiter Request Routes
+// GET: All Waiter Requests
 app.get('/api/requests', async (req, res) => {
   try {
     const requests = await Request.find().sort({ createdAt: -1 });
@@ -92,16 +102,20 @@ app.get('/api/requests', async (req, res) => {
   }
 });
 
-// Root Route
+// Root Health Check
 app.get('/', (req, res) => {
   res.send('Ali Halal Server is running... 🚀');
 });
 
-// MongoDB Connection
+// --- DATABASE CONNECTION ---
 const dbURI = process.env.MONGO_URI || 'mongodb://localhost:27017/alihalal';
+
 mongoose.connect(dbURI)
   .then(() => console.log("✅ Ali Halal Database Connected Successfully!"))
   .catch(err => console.log("❌ DB Error:", err));
 
+// --- SERVER START ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server is live on port ${PORT}`);
+});
