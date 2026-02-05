@@ -9,7 +9,7 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// --- MONGODB MODELS ---
+// --- MONGODB MODELS (Synced with your JSON data) ---
 
 // 1. Menu Item Model
 const itemSchema = new mongoose.Schema({
@@ -21,7 +21,7 @@ const itemSchema = new mongoose.Schema({
 }, { collection: 'items' });
 const Item = mongoose.model('Item', itemSchema);
 
-// 2. Order Model (Matched to your JSON fields)
+// 2. Order Model (Matched to your JSON fields: phoneNumber, totalAmount, etc.)
 const orderSchema = new mongoose.Schema({
   phoneNumber: String,
   tableNumber: String,
@@ -65,6 +65,7 @@ app.get('/api/menu', async (req, res) => {
 });
 
 // --- ORDERS ---
+// This GET route fixes your "Cannot GET /api/orders" error
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
