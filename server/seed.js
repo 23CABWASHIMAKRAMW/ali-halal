@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // 1. YOUR CONNECTION STRING (Make sure /ali_halal is before the ?)
-const MONGO_URI = "mongodb+srv://your_username:your_password@cluster0.mongodb.net/ali_halal?retryWrites=true&w=majority";
+const MONGO_URI = "mongodb+srv://washim6780_db_user:washim2005@cluster0.96j6kz3.mongodb.net/ali_halal?retryWrites=true&w=majority&appName=Cluster0";
 
 // 2. THE SCHEMA (Must match index.js)
 const itemSchema = new mongoose.Schema({
