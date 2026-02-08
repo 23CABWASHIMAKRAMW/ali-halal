@@ -14,19 +14,12 @@ const Menu = ({ session }) => {
     ? "http://localhost:5000" 
     : "https://ali-halal-backend.onrender.com";
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`${API_URL}/api/menu`)
-      .then(res => res.json())
-      .then(data => {
-        setItems(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Server error:", err);
-        setLoading(false);
-      });
-  }, [API_URL]);
+ useEffect(() => {
+  fetch("https://ali-halal-backend.onrender.com/api/items")
+    .then(res => res.json())
+    .then(data => setMenuItems(data))
+    .catch(err => console.error("Menu Load Error:", err));
+}, []);
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
 

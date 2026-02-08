@@ -18,6 +18,17 @@ app.use((req, res, next) => {
 
 // --- MONGODB MODELS (Fixed for ali_halal) ---
 
+// Ensure this is near the top of your index.js
+const itemSchema = new mongoose.Schema({
+  itemName: String,
+  description: String,
+  price: Number,
+  category: String,
+  isAvailable: { type: Boolean, default: true }
+}, { collection: 'items' });
+
+const Item = mongoose.model('Item', itemSchema); // <--- This name "Item" is used in the route above
+
 const orderSchema = new mongoose.Schema({
   phoneNumber: String,
   tableNumber: String,
@@ -49,13 +60,24 @@ const Request = mongoose.model('Request', requestSchema);
 // index.js (Add this if it's missing or update it)
 app.get('/api/items', async (req, res) => {
   try {
-    const items = await Item.find(); // This looks in the 'items' collection
-    if (items.length === 0) {
-      return res.status(404).json({ message: "No items found in database" });
+    const items = await Item.find(); // This looks inside the 'items' collection
+    if (!items || items.length === 0) {
+      return res.status(404).json({ message: "No items found in database. Please run seed.js" });
     }
     res.json(items);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Menu Fetch Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post('/api/items', async (req, res) => {
+  try {
+    const newItem = new Item(req.body);
+    await newItem.save();
+    res.status(201).json(newItem);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 
