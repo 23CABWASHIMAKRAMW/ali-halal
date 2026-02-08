@@ -82,7 +82,7 @@ app.post('/api/orders', async (req, res) => {
 app.delete('/api/orders/:id', async (req, res) => {
   try {
     await Order.findByIdAndDelete(req.params.id);
-    res.json({ message: "Order deleted successfully" });
+    res.json({ message: "Order deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -111,7 +111,7 @@ app.get('/api/requests', async (req, res) => {
 app.delete('/api/requests/:id', async (req, res) => {
   try {
     await Request.findByIdAndDelete(req.params.id);
-    res.json({ message: "Request cleared" });
+    res.json({ message: "Request deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
