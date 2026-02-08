@@ -6,7 +6,15 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: "*" }));
+// Replace your old CORS line with this:
+app.use(cors({
+  origin: "*", // Allows any website (Vercel, Localhost, etc.) to access the data
+  methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Add this right below it to handle "pre-flight" requests
+app.options('*', cors());
 app.use(express.json());
 
 // --- MONGODB MODELS ---
