@@ -5,15 +5,13 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-// Replace your old CORS line with this:
+// --- MIDDLEWARE ---
 app.use(cors({
-  origin: "*", // Allows any website (Vercel, Localhost, etc.) to access the data
+  origin: "*", 
   methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Add this right below it to handle "pre-flight" requests
 app.options('*', cors());
 app.use(express.json());
 
@@ -31,7 +29,7 @@ const Item = mongoose.model('Item', itemSchema);
 const orderSchema = new mongoose.Schema({
   phoneNumber: String,
   tableNumber: String,
-  items: Array,
+  items: Array, // Expected format: [{ itemName: String, price: Number, quantity: Number }]
   totalAmount: Number, 
   paymentMethod: { type: String, default: 'Cash' },
   status: { type: String, default: 'Pending' },
@@ -61,7 +59,10 @@ const Request = mongoose.model('Request', requestSchema);
 // 1. ORDERS
 app.get('/api/orders', async (req, res) => {
   try {
+    // Sort by newest first
     const orders = await Order.find().sort({ createdAt: -1 });
+    // Prevent browser from caching old order lists
+    res.set('Cache-Control', 'no-store');
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -78,11 +79,14 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// This DELETE route allows the Admin Panel to "Complete" orders
+// FIXED: Improved DELETE route to ensure order disappears
 app.delete('/api/orders/:id', async (req, res) => {
   try {
-    await Order.findByIdAndDelete(req.params.id);
-    res.json({ message: "Order deleted" });
+    const result = await Order.findByIdAndDelete(req.params.id);
+    if (!result) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    res.json({ message: "Order completed and removed" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -111,7 +115,7 @@ app.get('/api/requests', async (req, res) => {
 app.delete('/api/requests/:id', async (req, res) => {
   try {
     await Request.findByIdAndDelete(req.params.id);
-    res.json({ message: "Request deleted" });
+    res.json({ message: "Request cleared" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
