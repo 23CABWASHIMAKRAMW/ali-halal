@@ -6,7 +6,7 @@ const AdminDashboard = () => {
   const [waiterCalls, setWaiterCalls] = useState([]);
 
   // Change this to your Render URL when you deploy!
-  const API_BASE_URL = "https://ali-halal-backend.onrender.com"; 
+  const API_BASE_URL = "https://ali-halal-backend.onrender.com/api/orders"; 
   // For local testing, use: const API_BASE_URL = "http://localhost:5000";
 
   const fetchData = () => {
