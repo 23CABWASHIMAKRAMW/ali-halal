@@ -5,36 +5,43 @@ const AdminDashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [waiterCalls, setWaiterCalls] = useState([]);
 
+  // Change this to your Render URL when you deploy!
+  const API_BASE_URL = "https://ali-halal-backend.onrender.com"; 
+  // For local testing, use: const API_BASE_URL = "http://localhost:5000";
+
   const fetchData = () => {
-    // 1. Fetch Orders
-    fetch('http://localhost:5000/api/orders/all')
+    // 1. Fetch Orders (Removed /all to match index.js)
+    fetch(`${API_BASE_URL}/api/orders`)
       .then(res => res.json())
-      .then(data => setOrders(data));
+      .then(data => setOrders(Array.isArray(data) ? data : []))
+      .catch(err => console.error("Order Fetch Error:", err));
 
     // 2. Fetch Reviews
-    fetch('http://localhost:5000/api/reviews/all')
+    fetch(`${API_BASE_URL}/api/reviews`)
       .then(res => res.json())
-      .then(data => setReviews(data));
+      .then(data => setReviews(Array.isArray(data) ? data : []))
+      .catch(err => console.error("Review Fetch Error:", err));
 
     // 3. Fetch Waiter Calls
-    fetch('http://localhost:5000/api/requests/all')
+    fetch(`${API_BASE_URL}/api/requests`)
       .then(res => res.json())
-      .then(data => setWaiterCalls(data));
+      .then(data => setWaiterCalls(Array.isArray(data) ? data : []))
+      .catch(err => console.error("Request Fetch Error:", err));
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Auto-refresh every 5 seconds
+    const interval = setInterval(fetchData, 5000); 
     return () => clearInterval(interval);
   }, []);
 
   const markAsServed = (id) => {
-    fetch(`http://localhost:5000/api/orders/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE_URL}/api/orders/${id}`, { method: 'DELETE' })
       .then(() => fetchData());
   };
 
   const resolveCall = (id) => {
-    fetch(`http://localhost:5000/api/requests/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE_URL}/api/requests/${id}`, { method: 'DELETE' })
       .then(() => fetchData());
   };
 
@@ -42,7 +49,7 @@ const AdminDashboard = () => {
     <div style={{ backgroundColor: '#121212', minHeight: '100vh', padding: '20px', color: 'white', fontFamily: 'Arial' }}>
       <h1 style={{ color: '#F4A300', textAlign: 'center' }}>ALI HALAL ADMIN PANEL</h1>
 
-      {/* --- SECTION 1: WAITER ALERTS (Only shows if there is a call) --- */}
+      {/* --- SECTION 1: WAITER ALERTS --- */}
       {waiterCalls.length > 0 && (
         <div style={{ marginBottom: '40px' }}>
           <h2 style={{ color: '#ff4d4d' }}>🚨 WAITER REQUESTS</h2>
@@ -50,6 +57,7 @@ const AdminDashboard = () => {
             {waiterCalls.map(call => (
               <div key={call._id} style={{ backgroundColor: '#C8102E', padding: '15px', borderRadius: '10px', border: '2px solid white', textAlign: 'center' }}>
                 <h3 style={{ margin: 0 }}>TABLE {call.tableNumber}</h3>
+                <p>{call.requestType}</p>
                 <button onClick={() => resolveCall(call._id)} style={{ marginTop: '10px', padding: '5px 10px', cursor: 'pointer', fontWeight: 'bold' }}>DONE ✅</button>
               </div>
             ))}
@@ -67,13 +75,12 @@ const AdminDashboard = () => {
               <span style={{ color: '#C8102E', fontWeight: 'bold' }}>{order.paymentMethod}</span>
             </div>
             <ul style={{ padding: '15px 0', margin: 0, listStyleType: 'none' }}>
-              {order.items.map((item, i) => (
+              {order.items && order.items.map((item, i) => (
                 <li key={i} style={{ padding: '3px 0' }}>• {item.itemName}</li>
               ))}
             </ul>
-            <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>Total: ${order.totalAmount}</div>
+            <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>Total: ₹{order.totalAmount}</div>
             
-            {/* THIS IS THE COMPLETE BUTTON */}
             <button 
               onClick={() => markAsServed(order._id)} 
               style={{ width: '100%', padding: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}
