@@ -6,15 +6,17 @@ require('dotenv').config();
 const app = express();
 
 // --- MIDDLEWARE ---
-app.use(cors({
-  origin: "*", 
-  methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-app.options('*', cors());
+// REPLACE your current app.use(cors...) with this in server/index.js
+app.use(cors()); // This allows ALL origins
 app.use(express.json());
 
+// Add this header manually to every request just in case
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 // --- MONGODB MODELS ---
 
 const itemSchema = new mongoose.Schema({
