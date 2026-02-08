@@ -5,12 +5,11 @@ const AdminDashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [waiterCalls, setWaiterCalls] = useState([]);
 
-  // Change this to your Render URL when you deploy!
-  const API_BASE_URL = "https://ali-halal-backend.onrender.com/api/orders"; 
-  // For local testing, use: const API_BASE_URL = "http://localhost:5000";
+  // FIXED: The base URL should NOT include "/api/orders" at the end
+  const API_BASE_URL = "https://ali-halal-backend.onrender.com"; 
 
   const fetchData = () => {
-    // 1. Fetch Orders (Removed /all to match index.js)
+    // 1. Fetch Orders
     fetch(`${API_BASE_URL}/api/orders`)
       .then(res => res.json())
       .then(data => setOrders(Array.isArray(data) ? data : []))
@@ -37,12 +36,14 @@ const AdminDashboard = () => {
 
   const markAsServed = (id) => {
     fetch(`${API_BASE_URL}/api/orders/${id}`, { method: 'DELETE' })
-      .then(() => fetchData());
+      .then(() => fetchData())
+      .catch(err => console.error("Delete Error:", err));
   };
 
   const resolveCall = (id) => {
     fetch(`${API_BASE_URL}/api/requests/${id}`, { method: 'DELETE' })
-      .then(() => fetchData());
+      .then(() => fetchData())
+      .catch(err => console.error("Delete Request Error:", err));
   };
 
   return (
@@ -50,20 +51,16 @@ const AdminDashboard = () => {
       <h1 style={{ color: '#F4A300', textAlign: 'center' }}>ALI HALAL ADMIN PANEL</h1>
 
       {/* --- SECTION 1: WAITER ALERTS --- */}
-      {waiterCalls.length > 0 && (
-        <div style={{ marginBottom: '40px' }}>
-          <h2 style={{ color: '#ff4d4d' }}>🚨 WAITER REQUESTS</h2>
-          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            {waiterCalls.map(call => (
-              <div key={call._id} style={{ backgroundColor: '#C8102E', padding: '15px', borderRadius: '10px', border: '2px solid white', textAlign: 'center' }}>
-                <h3 style={{ margin: 0 }}>TABLE {call.tableNumber}</h3>
-                <p>{call.requestType}</p>
-                <button onClick={() => resolveCall(call._id)} style={{ marginTop: '10px', padding: '5px 10px', cursor: 'pointer', fontWeight: 'bold' }}>DONE ✅</button>
-              </div>
-            ))}
+      <h2 style={{ color: '#ff4d4d' }}>🚨 WAITER REQUESTS</h2>
+      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '40px' }}>
+        {waiterCalls.length === 0 ? <p>No active requests.</p> : waiterCalls.map(call => (
+          <div key={call._id} style={{ backgroundColor: '#C8102E', padding: '15px', borderRadius: '10px', border: '2px solid white', textAlign: 'center' }}>
+            <h3 style={{ margin: 0 }}>TABLE {call.tableNumber}</h3>
+            <p>{call.requestType}</p>
+            <button onClick={() => resolveCall(call._id)} style={{ marginTop: '10px', padding: '5px 10px', cursor: 'pointer', fontWeight: 'bold' }}>DONE ✅</button>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
       {/* --- SECTION 2: ACTIVE ORDERS --- */}
       <h2 style={{ color: '#F4A300', borderBottom: '2px solid #333', paddingBottom: '10px' }}>ACTIVE ORDERS</h2>
@@ -80,7 +77,6 @@ const AdminDashboard = () => {
               ))}
             </ul>
             <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>Total: ₹{order.totalAmount}</div>
-            
             <button 
               onClick={() => markAsServed(order._id)} 
               style={{ width: '100%', padding: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}
