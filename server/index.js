@@ -9,16 +9,7 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
-
-// --- MONGODB MODELS (Fixed for ali_halal) ---
-
-// Ensure this is near the top of your index.js
+// --- MONGODB MODELS ---
 const itemSchema = new mongoose.Schema({
   itemName: String,
   description: String,
@@ -26,8 +17,7 @@ const itemSchema = new mongoose.Schema({
   category: String,
   isAvailable: { type: Boolean, default: true }
 }, { collection: 'items' });
-
-const Item = mongoose.model('Item', itemSchema); // <--- This name "Item" is used in the route above
+const Item = mongoose.model('Item', itemSchema);
 
 const orderSchema = new mongoose.Schema({
   phoneNumber: String,
@@ -50,41 +40,28 @@ const Review = mongoose.model('Review', reviewSchema);
 
 const requestSchema = new mongoose.Schema({
   tableNumber: String,
-  requestType: String,
+  requestType: { type: String, default: 'Waiter Requested' },
   status: { type: String, default: 'Active' },
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'requests' });
 const Request = mongoose.model('Request', requestSchema);
 
 // --- API ROUTES ---
-// index.js (Add this if it's missing or update it)
+
+// 1. GET MENU
 app.get('/api/items', async (req, res) => {
   try {
-    const items = await Item.find(); // This looks inside the 'items' collection
-    if (!items || items.length === 0) {
-      return res.status(404).json({ message: "No items found in database. Please run seed.js" });
-    }
+    const items = await Item.find();
     res.json(items);
   } catch (err) {
-    console.error("Menu Fetch Error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/items', async (req, res) => {
-  try {
-    const newItem = new Item(req.body);
-    await newItem.save();
-    res.status(201).json(newItem);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
+// 2. ORDERS (GET & POST)
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
-    res.set('Cache-Control', 'no-store');
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -93,12 +70,10 @@ app.get('/api/orders', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    console.log("New Order Received:", req.body); // Check Render Logs for this!
     const newOrder = new Order(req.body);
     await newOrder.save();
     res.status(201).json(newOrder);
   } catch (err) {
-    console.error("Save Error:", err.message);
     res.status(400).json({ error: err.message });
   }
 });
@@ -112,6 +87,7 @@ app.delete('/api/orders/:id', async (req, res) => {
   }
 });
 
+// 3. REVIEWS (GET)
 app.get('/api/reviews', async (req, res) => {
   try {
     const reviews = await Review.find().sort({ createdAt: -1 });
@@ -121,12 +97,23 @@ app.get('/api/reviews', async (req, res) => {
   }
 });
 
+// 4. WAITER REQUESTS (GET, POST, DELETE)
 app.get('/api/requests', async (req, res) => {
   try {
     const requests = await Request.find().sort({ createdAt: -1 });
     res.json(requests);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/requests', async (req, res) => {
+  try {
+    const newRequest = new Request(req.body);
+    await newRequest.save();
+    res.status(201).json(newRequest);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -139,14 +126,8 @@ app.delete('/api/requests/:id', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Ali Halal Server is running... 🚀');
-});
-
-// --- DATABASE CONNECTION (CRITICAL FIX) ---
-const dbURI = process.env.MONGO_URI;
-// This ensures we connect to the 'ali_halal' database folder specifically
-mongoose.connect(dbURI, { dbName: 'ali_halal' }) 
+// --- DB CONNECTION ---
+mongoose.connect(process.env.MONGO_URI, { dbName: 'ali_halal' }) 
   .then(() => console.log("✅ Ali Halal Database Connected!"))
   .catch(err => console.log("❌ DB Error:", err));
 

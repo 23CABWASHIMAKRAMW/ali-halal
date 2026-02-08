@@ -5,21 +5,25 @@ import UPIPayment from './UPIPayment';
 const Menu = ({ session }) => {
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState([]);
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [loading, setLoading] = useState(true);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [showUPI, setShowUPI] = useState(false);
 
-  const API_URL = window.location.hostname === "localhost" 
-    ? "http://localhost:5000" 
-    : "https://ali-halal-backend.onrender.com";
+  const API_URL = "https://ali-halal-backend.onrender.com";
 
- useEffect(() => {
-  fetch("https://ali-halal-backend.onrender.com/api/items")
-    .then(res => res.json())
-    .then(data => setMenuItems(data))
-    .catch(err => console.error("Menu Load Error:", err));
-}, []);
+  useEffect(() => {
+    fetch(`${API_URL}/api/items`)
+      .then(res => res.json())
+      .then(data => {
+        setItems(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Menu Load Error:", err);
+        setLoading(false);
+      });
+  }, []);
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
 
@@ -27,12 +31,12 @@ const Menu = ({ session }) => {
     const orderData = {
       phoneNumber: session.phone,
       tableNumber: String(session.table),
-      items: cart.map(item => ({ itemName: item.itemName, price: item.price })),
+      items: cart.map(item => ({ itemName: item.itemName, price: item.price, quantity: 1 })),
       totalAmount: Number(totalPrice),
       paymentMethod: paymentMethod
     };
 
-    fetch(`${API_URL}/api/orders/place`, {
+    fetch(`${API_URL}/api/orders`, { // Corrected URL
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData)
@@ -53,10 +57,10 @@ const Menu = ({ session }) => {
   };
 
   const callWaiter = () => {
-    fetch(`${API_URL}/api/requests/call`, {
+    fetch(`${API_URL}/api/requests`, { // Corrected URL
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tableNumber: session.table }) 
+      body: JSON.stringify({ tableNumber: session.table, requestType: "Waiter Requested" }) 
     }).then(() => alert("🔔 Waiter notified for Table " + session.table));
   };
 
@@ -98,14 +102,13 @@ const Menu = ({ session }) => {
         {loading ? (
           <p style={{ textAlign: 'center' }}>Loading delicious menu...</p>
         ) : items.length === 0 ? (
-          <p style={{ textAlign: 'center' }}>No items found in database.</p>
+          <p style={{ textAlign: 'center' }}>No items found in database. Run seed.js</p>
         ) : (
           items.map(item => (
             <div key={item._id} style={{ background: 'white', padding: '15px', marginBottom: '10px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
               <div>
                   <h3 style={{ margin: 0, color: '#1A2332' }}>{item.itemName}</h3>
                   <p style={{ color: '#777', margin: '5px 0' }}>₹{item.price}</p>
-                  {item.description && <p style={{ fontSize: '0.8rem', color: '#999' }}>{item.description}</p>}
               </div>
               <button onClick={() => setCart([...cart, item])} style={{ backgroundColor: '#1A2332', color: 'white', border: 'none', borderRadius: '5px', padding: '8px 15px', cursor: 'pointer' }}>ADD +</button>
             </div>
