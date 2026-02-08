@@ -46,6 +46,18 @@ const requestSchema = new mongoose.Schema({
 const Request = mongoose.model('Request', requestSchema);
 
 // --- API ROUTES ---
+// index.js (Add this if it's missing or update it)
+app.get('/api/items', async (req, res) => {
+  try {
+    const items = await Item.find(); // This looks in the 'items' collection
+    if (items.length === 0) {
+      return res.status(404).json({ message: "No items found in database" });
+    }
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get('/api/orders', async (req, res) => {
   try {
