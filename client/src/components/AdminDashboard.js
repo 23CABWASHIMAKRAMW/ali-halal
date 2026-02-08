@@ -12,25 +12,24 @@ const AdminDashboard = () => {
   const fetchData = useCallback(async () => {
     const timestamp = new Date().getTime();
     try {
-      // 1. Fetch Orders
-      const orderRes = await fetch(`${API_BASE_URL}/api/orders?t=${timestamp}`);
+      // 1. Fetch Orders, Reviews, and Requests at once
+      const [orderRes, reviewRes, reqRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/orders?t=${timestamp}`),
+        fetch(`${API_BASE_URL}/api/reviews?t=${timestamp}`),
+        fetch(`${API_BASE_URL}/api/requests?t=${timestamp}`)
+      ]);
+
       const orderData = await orderRes.json();
-      setOrders(Array.isArray(orderData) ? orderData : []);
-
-      // 2. Fetch Reviews
-      const reviewRes = await fetch(`${API_BASE_URL}/api/reviews?t=${timestamp}`);
       const reviewData = await reviewRes.json();
-      setReviews(Array.isArray(reviewData) ? reviewData : []);
-
-      // 3. Fetch Waiter Calls
-      const reqRes = await fetch(`${API_BASE_URL}/api/requests?t=${timestamp}`);
       const reqData = await reqRes.json();
+
+      setOrders(Array.isArray(orderData) ? orderData : []);
+      setReviews(Array.isArray(reviewData) ? reviewData : []);
       setWaiterCalls(Array.isArray(reqData) ? reqData : []);
       
       setLoading(false);
     } catch (err) {
       console.error("Dashboard Fetch Error:", err);
-      // Don't set loading false here so user knows it's still trying
     }
   }, [API_BASE_URL]);
 
@@ -40,20 +39,20 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  // Function to remove served orders
   const markAsServed = async (id) => {
-    // Optimistic UI update: remove immediately from screen
+    // UI Update: remove immediately
     setOrders(prev => prev.filter(order => order._id !== id));
-
     try {
       const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error("Delete failed on server");
-      console.log("Order completed successfully");
+      if (!res.ok) throw new Error("Delete failed");
     } catch (err) {
       console.error("Delete Error:", err);
-      fetchData(); // Refresh to bring back the order if delete failed
+      fetchData(); // Refresh if error occurs
     }
   };
 
+  // Function to clear waiter requests
   const resolveCall = async (id) => {
     setWaiterCalls(prev => prev.filter(call => call._id !== id));
     try {
@@ -97,7 +96,7 @@ const AdminDashboard = () => {
             </div>
 
             <div style={{ marginBottom: '12px', fontSize: '1rem', color: '#000', fontWeight: '600' }}>
-              📞 Contact: <span style={{ color: '#007bff' }}>{order.phoneNumber || "Walk-in"}</span>
+              📞 Contact: <span style={{ color: '#007bff' }}>{order.phoneNumber || "Not Provided"}</span>
             </div>
 
             <ul style={{ padding: '0', margin: '0 0 15px 0', listStyleType: 'none', flexGrow: 1 }}>
@@ -105,7 +104,7 @@ const AdminDashboard = () => {
                 <li key={i} style={{ padding: '8px 0', borderBottom: '1px solid #f9f9f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '1.05rem' }}>• {item.itemName}</span>
                   <span style={{ fontWeight: 'bold', color: '#C8102E', fontSize: '1.1rem' }}>
-                    {item.quantity ? `x${item.quantity}` : "x1"}
+                    x{item.quantity || 1}
                   </span>
                 </li>
               ))}
@@ -117,7 +116,7 @@ const AdminDashboard = () => {
 
             <button 
               onClick={() => markAsServed(order._id)} 
-              style={{ width: '100%', padding: '14px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem', transition: '0.3s' }}
+              style={{ width: '100%', padding: '14px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem' }}
             >
               COMPLETE ORDER ✅
             </button>
